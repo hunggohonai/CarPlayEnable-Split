@@ -30,9 +30,11 @@ jobs:
           from pathlib import Path
           import base64
           parts = sorted(Path("patchparts").glob("part*.b64"))
-          data = "".join(p.read_text().strip() for p in parts)
-          Path("split-screen.patch").write_bytes(base64.b64decode(data))
-          print("patch bytes:", Path("split-screen.patch").stat().st_size)
+          out = b"".join(base64.b64decode(p.read_text().strip()) for p in parts)
+          Path("split-screen.patch").write_bytes(out)
+          print("parts:", len(parts), "patch bytes:", len(out))
+          assert len(parts) == 7
+          assert len(out) == 31419
           PY
 
       - name: Clone and patch CarPlayEnable
