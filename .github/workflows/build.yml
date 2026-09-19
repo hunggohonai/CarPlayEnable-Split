@@ -71,37 +71,26 @@ jobs:
           from pathlib import Path
           p = Path("work/src/hooks/SpringBoard.xm")
           s = p.read_text()
-          old = """        // Dismiss any apps that are already being hosted on Carplay
-        id liveCarplayWindow = objcInvoke([UIApplication sharedApplication], @"liveCarplayWindow");
-        if (liveCarplayWindow != nil)
-        {
-            objcInvoke(liveCarplayWindow, @"dismiss");
-        }
-
-        // Launch the requested app
-        liveCarplayWindow = [[CRCarPlayWindow alloc] initWithBundleIdentifier:identifier];
-        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);"""
-          new = """        // First CarPlayEnable icon creates App 1. While that hosted window is still alive,
-        // the next CarPlayEnable icon becomes App 2 instead of replacing App 1.
-        id liveCarplayWindow = objcInvoke([UIApplication sharedApplication], @"liveCarplayWindow");
-        if (liveCarplayWindow != nil)
-        {
-            SEL splitSelector = NSSelectorFromString(@"setupSecondAppWithBundleIdentifier:");
-            if ([liveCarplayWindow respondsToSelector:splitSelector])
-            {
-                ((void (*)(id, SEL, id))objc_msgSend)(liveCarplayWindow, splitSelector, identifier);
-                return;
-            }
-
-            // Safety fallback for an older window implementation.
-            objcInvoke(liveCarplayWindow, @"dismiss");
-        }
-
-        liveCarplayWindow = [[CRCarPlayWindow alloc] initWithBundleIdentifier:identifier];
-        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);"""
-          if old not in s:
-              raise SystemExit("launchAppOnCarplay block not found")
-          p.write_text(s.replace(old, new, 1))
+          start = s.index("        // Dismiss any apps that are already being hosted on Carplay")
+          end_marker = "        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);"
+          end = s.index(end_marker, start) + len(end_marker)
+          new = (
+              "        // First icon creates App 1; next icon becomes App 2.\n"
+              "        id liveCarplayWindow = objcInvoke([UIApplication sharedApplication], @\"liveCarplayWindow\");\n"
+              "        if (liveCarplayWindow != nil)\n"
+              "        {\n"
+              "            SEL splitSelector = NSSelectorFromString(@\"setupSecondAppWithBundleIdentifier:\");\n"
+              "            if ([liveCarplayWindow respondsToSelector:splitSelector])\n"
+              "            {\n"
+              "                ((void (*)(id, SEL, id))objc_msgSend)(liveCarplayWindow, splitSelector, identifier);\n"
+              "                return;\n"
+              "            }\n"
+              "            objcInvoke(liveCarplayWindow, @\"dismiss\");\n"
+              "        }\n\n"
+              "        liveCarplayWindow = [[CRCarPlayWindow alloc] initWithBundleIdentifier:identifier];\n"
+              "        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);"
+          )
+          p.write_text(s[:start] + new + s[end:])
           PY
 
       - name: Fix SpringBoard enum typing
