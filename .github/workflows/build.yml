@@ -75,28 +75,17 @@ jobs:
           end_marker = "        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);"
           end = s.index(end_marker, start) + len(end_marker)
           new = (
-              "        // First icon creates App 1; next icon becomes App 2.\n"
-              "        id liveCarplayWindow = objc_getAssociatedObject(self, &kPropertyKey_liveCarplayWindow);\n"
-              "        if (liveCarplayWindow == nil) liveCarplayWindow = objcInvoke([UIApplication sharedApplication], @\"liveCarplayWindow\");\n"
+              "        // Normal CarPlayEnable behavior: close the previous hosted app before opening the new one.\n"
+              "        id liveCarplayWindow = objcInvoke([UIApplication sharedApplication], @\"liveCarplayWindow\");\n"
               "        if (liveCarplayWindow != nil)\n"
               "        {\n"
-              "            SEL splitSelector = NSSelectorFromString(@\"selectAppForSplitWithBundleIdentifier:\");\n"
-              "            if ([liveCarplayWindow respondsToSelector:splitSelector])\n"
-              "            {\n"
-              "                ((void (*)(id, SEL, id))objc_msgSend)(liveCarplayWindow, splitSelector, identifier);\n"
-              "                return;\n"
-              "            }\n"
-              "            objcInvoke(liveCarplayWindow, @\"dismiss\");\n"
+              "            objcInvoke(liveCarplayWindow, @\"hardDismiss\");\n"
               "        }\n\n"
               "        liveCarplayWindow = [[CRCarPlayWindow alloc] initWithBundleIdentifier:identifier];\n"
               "        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);"
           )
           p.write_text(s[:start] + new + s[end:])
           PY
-
-      - name: Add App 1 and App 2 toggle controls
-        run: |
-          python3 scripts/add_split_toggles.py
 
       - name: Fix SpringBoard enum typing
         run: |
@@ -118,9 +107,9 @@ jobs:
       - name: Adjust package metadata and target
         run: |
           cd work
-          sed -i '' 's/^Version:.*/Version: 1.0.2-split7/' control
+          sed -i '' 's/^Version:.*/Version: 1.0.2-normal1/' control
           sed -i '' 's/^Name:.*/Name: CarPlayEnable Split/' control
-          sed -i '' 's/^Description:.*/Description: Experimental iOS 14 split screen with replaceable hidden slot and Maps Zalo CarTube test/' control
+          sed -i '' 's/^Description:.*/Description: iOS 14 normal single-app CarPlay mode - fixes app overlay when switching/' control
           sed -i '' 's/^ARCHS = .*/ARCHS = arm64/' Makefile
           sed -i '' 's/^TARGET = .*/TARGET = iphone:clang:14.5:14.0/' Makefile
           sed -i '' 's/^ARCHS = .*/ARCHS = arm64/' carplayenableprefs/Makefile
