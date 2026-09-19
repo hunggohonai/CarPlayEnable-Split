@@ -71,7 +71,7 @@ jobs:
           from pathlib import Path
           p = Path("work/src/hooks/SpringBoard.xm")
           s = p.read_text()
-          old = '''        // Dismiss any apps that are already being hosted on Carplay
+          old = """        // Dismiss any apps that are already being hosted on Carplay
         id liveCarplayWindow = objcInvoke([UIApplication sharedApplication], @"liveCarplayWindow");
         if (liveCarplayWindow != nil)
         {
@@ -80,8 +80,8 @@ jobs:
 
         // Launch the requested app
         liveCarplayWindow = [[CRCarPlayWindow alloc] initWithBundleIdentifier:identifier];
-        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);'''
-          new = '''        // First CarPlayEnable icon creates App 1. While that hosted window is still alive,
+        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);"""
+          new = """        // First CarPlayEnable icon creates App 1. While that hosted window is still alive,
         // the next CarPlayEnable icon becomes App 2 instead of replacing App 1.
         id liveCarplayWindow = objcInvoke([UIApplication sharedApplication], @"liveCarplayWindow");
         if (liveCarplayWindow != nil)
@@ -98,7 +98,7 @@ jobs:
         }
 
         liveCarplayWindow = [[CRCarPlayWindow alloc] initWithBundleIdentifier:identifier];
-        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);'''
+        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);"""
           if old not in s:
               raise SystemExit("launchAppOnCarplay block not found")
           p.write_text(s.replace(old, new, 1))
