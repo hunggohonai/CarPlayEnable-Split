@@ -65,6 +65,23 @@ jobs:
           p.write_text(s)
           PY
 
+      - name: Fix SpringBoard enum typing
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("work/src/hooks/SpringBoard.xm")
+          s = p.read_text()
+          s = s.replace(
+              "UIInterfaceOrientationIsLandscape(deviceOrientation)",
+              "UIInterfaceOrientationIsLandscape((UIInterfaceOrientation)deviceOrientation)"
+          )
+          s = s.replace(
+              "UIInterfaceOrientationIsLandscape(orientation)",
+              "UIInterfaceOrientationIsLandscape((UIInterfaceOrientation)orientation)"
+          )
+          p.write_text(s)
+          PY
+
       - name: Adjust package metadata and target
         run: |
           cd work
