@@ -1,0 +1,76 @@
+name: Build CarPlayEnable Split
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout overlay
+        uses: actions/checkout@v4
+
+      - name: Setup Theos
+        uses: waruhachi/theos-action@v2.4.6
+        with:
+          theos-src: 'waruhachi/theos'
+          theos-branch: 'main'
+          sdks-src: 'waruhachi/sdks'
+          sdks-branch: 'main'
+          altlist: 'true'
+          altlist-src: 'waruhachi/AltList'
+          altlist-branch: 'main'
+
+      - name: Reconstruct patch
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64
+          parts = sorted(Path("patchparts").glob("part*.b64"))
+          data = "".join(p.read_text().strip() for p in parts)
+          Path("split-screen.patch").write_bytes(base64.b64decode(data))
+          print("patch bytes:", Path("split-screen.patch").stat().st_size)
+          PY
+
+      - name: Clone and patch CarPlayEnable
+        run: |
+          git clone --depth 1 https://github.com/EthanArbuckle/carplay-cast.git work
+          cd work
+          git apply --check ../split-screen.patch
+          git apply ../split-screen.patch
+
+      - name: Adjust package metadata and target
+        run: |
+          cd work
+          sed -i '' 's/^Version:.*/Version: 1.0.2-split1/' control
+          sed -i '' 's/^Name:.*/Name: CarPlayEnable Split/' control
+          sed -i '' 's/^Description:.*/Description: Experimental 50-50 split screen build for iOS 14/' control
+          sed -i '' 's/^ARCHS = .*/ARCHS = arm64/' Makefile
+          sed -i '' 's/^TARGET = .*/TARGET = iphone:clang:14.5:14.0/' Makefile
+          sed -i '' 's/^ARCHS = .*/ARCHS = arm64/' carplayenableprefs/Makefile
+          sed -i '' 's/^TARGET = .*/TARGET = iphone:clang:14.5:14.0/' carplayenableprefs/Makefile
+          cat control
+          head -n 3 Makefile
+          head -n 3 carplayenableprefs/Makefile
+
+      - name: Build deb
+        run: |
+          cd work
+          make clean
+          make package FINALPACKAGE=1
+
+      - name: Collect deb
+        run: |
+          mkdir -p output
+          find work/packages -type f -name '*.deb' -exec cp {} output/ \;
+          ls -lh output
+
+      - name: Upload deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: CarPlayEnable-Split-iOS14
+          path: output/*.deb
+          if-no-files-found: error
