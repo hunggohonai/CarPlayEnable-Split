@@ -43,6 +43,28 @@ jobs:
           print("mm bytes:", len(mm), "h bytes:", len(hh))
           PY
 
+      - name: Fix modern Clang enum typing
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("work/src/CRCarplayWindow.mm")
+          s = p.read_text()
+          fixes = {
+            "traitCollectionWithUserInterfaceIdiom:3": "traitCollectionWithUserInterfaceIdiom:(UIUserInterfaceIdiom)3",
+            "traitCollectionWithUserInterfaceStyle:1": "traitCollectionWithUserInterfaceStyle:(UIUserInterfaceStyle)1",
+            "UIInterfaceOrientationIsLandscape(snapshotOrientation)": "UIInterfaceOrientationIsLandscape((UIInterfaceOrientation)snapshotOrientation)",
+            'UIInterfaceOrientationIsPortrait(objcInvokeT(appSnapshot, @"interfaceOrientation", int))': 'UIInterfaceOrientationIsPortrait((UIInterfaceOrientation)objcInvokeT(appSnapshot, @"interfaceOrientation", int))',
+            "UIInterfaceOrientationIsPortrait(self.orientation)": "UIInterfaceOrientationIsPortrait((UIInterfaceOrientation)self.orientation)",
+            "UIInterfaceOrientationIsLandscape(self.orientation)": "UIInterfaceOrientationIsLandscape((UIInterfaceOrientation)self.orientation)",
+            "UIInterfaceOrientationIsPortrait(desiredOrientation)": "UIInterfaceOrientationIsPortrait((UIInterfaceOrientation)desiredOrientation)",
+          }
+          for old,new in fixes.items():
+              if old not in s:
+                  print("warning: not found:", old)
+              s=s.replace(old,new)
+          p.write_text(s)
+          PY
+
       - name: Adjust package metadata and target
         run: |
           cd work
