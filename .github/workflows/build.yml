@@ -100,56 +100,45 @@ jobs:
           p = Path("work/src/CRCarplayWindow.mm")
           s = p.read_text()
           needle = "    self.splitScreenEnabled = YES;"
-          replacement = r"""    self.splitScreenEnabled = YES;\n\n    // Add quick controls: 1 toggles App 1, 2 toggles App 2.
-    UIButton *app1Toggle = [UIButton buttonWithType:UIButtonTypeSystem];
-    app1Toggle.frame = CGRectMake(8, 8, 42, 42);
-    [app1Toggle setTitle:@\"1\" forState:UIControlStateNormal];
-    [app1Toggle addTarget:self action:@selector(toggleFirstSplitApp) forControlEvents:UIControlEventTouchUpInside];
-    [self.dockView addSubview:app1Toggle];
-
-    UIButton *app2Toggle = [UIButton buttonWithType:UIButtonTypeSystem];
-    app2Toggle.frame = CGRectMake(8, 56, 42, 42);
-    [app2Toggle setTitle:@\"2\" forState:UIControlStateNormal];
-    [app2Toggle addTarget:self action:@selector(toggleSecondSplitApp) forControlEvents:UIControlEventTouchUpInside];
-    [self.dockView addSubview:app2Toggle];
-
-    // Draw the same main-screen placeholder used by App 1."""
+          lines = [
+            "",
+            "    // Split quick controls.",
+            "    UIButton *app1Toggle = [UIButton buttonWithType:UIButtonTypeSystem];",
+            "    app1Toggle.frame = CGRectMake(8, 8, 42, 42);",
+            "    [app1Toggle setTitle:@\"1\" forState:UIControlStateNormal];",
+            "    [app1Toggle addTarget:self action:@selector(toggleFirstSplitApp) forControlEvents:UIControlEventTouchUpInside];",
+            "    [self.dockView addSubview:app1Toggle];",
+            "",
+            "    UIButton *app2Toggle = [UIButton buttonWithType:UIButtonTypeSystem];",
+            "    app2Toggle.frame = CGRectMake(8, 56, 42, 42);",
+            "    [app2Toggle setTitle:@\"2\" forState:UIControlStateNormal];",
+            "    [app2Toggle addTarget:self action:@selector(toggleSecondSplitApp) forControlEvents:UIControlEventTouchUpInside];",
+            "    [self.dockView addSubview:app2Toggle];",
+          ]
           if needle not in s:
-              raise SystemExit("second app insertion point not found")
-          s = s.replace(needle, replacement, 1)
+              raise SystemExit("split enabled marker not found")
+          s = s.replace(needle, needle + "\n" + "\n".join(lines), 1)
 
           insert_at = s.rfind("@end")
-          methods = r'''
+          methods = """
 - (void)layoutVisibleSplitApps
 {
-    if (!self.splitScreenEnabled || !self.appViewController2 || !self.appContainerView2)
-    {
-        return;
-    }
-
+    if (!self.splitScreenEnabled || !self.appViewController2 || !self.appContainerView2) return;
     BOOL app1Visible = !self.appContainerView.hidden;
     BOOL app2Visible = !self.appContainerView2.hidden;
-
-    if (!app1Visible && !app2Visible)
-    {
-        self.appContainerView.hidden = NO;
-        app1Visible = YES;
-    }
+    if (!app1Visible && !app2Visible) { self.appContainerView.hidden = NO; app1Visible = YES; }
 
     CGRect bounds = self.rootWindow.bounds;
     CGFloat dockWidth = self.isFullscreen ? 0 : CARPLAY_DOCK_WIDTH;
     CGFloat baseX = [self shouldUseRightHandDock] ? 0 : dockWidth;
     CGFloat usableWidth = bounds.size.width - dockWidth;
 
-    if (app1Visible && app2Visible)
-    {
+    if (app1Visible && app2Visible) {
         CGFloat gap = 2.0f;
         CGFloat leftWidth = (usableWidth - gap) / 2.0f;
         self.appContainerView.frame = CGRectMake(baseX, 0, leftWidth, bounds.size.height);
         self.appContainerView2.frame = CGRectMake(baseX + leftWidth + gap, 0, usableWidth - gap - leftWidth, bounds.size.height);
-    }
-    else
-    {
+    } else {
         UIView *visibleContainer = app1Visible ? self.appContainerView : self.appContainerView2;
         visibleContainer.frame = CGRectMake(baseX, 0, usableWidth, bounds.size.height);
     }
@@ -157,35 +146,21 @@ jobs:
 
 - (void)toggleFirstSplitApp
 {
-    if (!self.splitScreenEnabled || !self.appViewController2)
-    {
-        return;
-    }
-
+    if (!self.splitScreenEnabled || !self.appViewController2) return;
     self.appContainerView.hidden = !self.appContainerView.hidden;
-    if (self.appContainerView.hidden && self.appContainerView2.hidden)
-    {
-        self.appContainerView2.hidden = NO;
-    }
+    if (self.appContainerView.hidden && self.appContainerView2.hidden) self.appContainerView2.hidden = NO;
     [self layoutVisibleSplitApps];
 }
 
 - (void)toggleSecondSplitApp
 {
-    if (!self.splitScreenEnabled || !self.appViewController2)
-    {
-        return;
-    }
-
+    if (!self.splitScreenEnabled || !self.appViewController2) return;
     self.appContainerView2.hidden = !self.appContainerView2.hidden;
-    if (self.appContainerView.hidden && self.appContainerView2.hidden)
-    {
-        self.appContainerView.hidden = NO;
-    }
+    if (self.appContainerView.hidden && self.appContainerView2.hidden) self.appContainerView.hidden = NO;
     [self layoutVisibleSplitApps];
 }
 
-'''
+"""
           s = s[:insert_at] + methods + s[insert_at:]
           p.write_text(s)
           PY
