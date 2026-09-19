@@ -6,12 +6,12 @@ needle = "    self.splitScreenEnabled = YES;"
 
 controls = r'''
 
-    // Split5 quick controls. Add them only once even when App 2 is replaced.
+    // DuoDash Lite controls. Keep controls persistent while either hosted app changes.
     if ([self.dockView viewWithTag:9101] == nil) {
         UIButton *app1Toggle = [UIButton buttonWithType:UIButtonTypeSystem];
         app1Toggle.tag = 9101;
         app1Toggle.frame = CGRectMake(8, 8, 42, 42);
-        [app1Toggle setTitle:@"1" forState:UIControlStateNormal];
+        [app1Toggle setTitle:@"L" forState:UIControlStateNormal];
         [app1Toggle addTarget:self action:@selector(toggleFirstSplitApp) forControlEvents:UIControlEventTouchUpInside];
         [self.dockView addSubview:app1Toggle];
     }
@@ -20,7 +20,7 @@ controls = r'''
         UIButton *app2Toggle = [UIButton buttonWithType:UIButtonTypeSystem];
         app2Toggle.tag = 9102;
         app2Toggle.frame = CGRectMake(8, 56, 42, 42);
-        [app2Toggle setTitle:@"2" forState:UIControlStateNormal];
+        [app2Toggle setTitle:@"R" forState:UIControlStateNormal];
         [app2Toggle addTarget:self action:@selector(toggleSecondSplitApp) forControlEvents:UIControlEventTouchUpInside];
         [self.dockView addSubview:app2Toggle];
     }
@@ -81,7 +81,7 @@ methods = r'''
     [self layoutVisibleSplitApps];
 }
 
-// Split5: when one slot is hidden/full-screen, selecting another app replaces
+// DuoDash Lite: when one slot is hidden/full-screen, selecting another app replaces
 // the hidden slot and keeps the visible app full-screen.
 - (void)selectAppForSplitWithBundleIdentifier:(NSString *)identifier
 {
