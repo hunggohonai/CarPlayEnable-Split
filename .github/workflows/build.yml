@@ -118,9 +118,9 @@ jobs:
       - name: Adjust package metadata and target
         run: |
           cd work
-          sed -i '' 's/^Version:.*/Version: 1.0.2-split5/' control
+          sed -i '' 's/^Version:.*/Version: 1.0.2-split6/' control
           sed -i '' 's/^Name:.*/Name: CarPlayEnable Split/' control
-          sed -i '' 's/^Description:.*/Description: Experimental iOS 14 split screen with replaceable hidden slot and full-screen hold/' control
+          sed -i '' 's/^Description:.*/Description: Experimental iOS 14 split screen Maps Zalo CarTube with replaceable hidden slot/' control
           sed -i '' 's/^ARCHS = .*/ARCHS = arm64/' Makefile
           sed -i '' 's/^TARGET = .*/TARGET = iphone:clang:14.5:14.0/' Makefile
           sed -i '' 's/^ARCHS = .*/ARCHS = arm64/' carplayenableprefs/Makefile
