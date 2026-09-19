@@ -99,10 +99,8 @@ jobs:
           from pathlib import Path
           p = Path("work/src/CRCarplayWindow.mm")
           s = p.read_text()
-          needle = "    self.splitScreenEnabled = YES;\n\n    // Draw the same main-screen placeholder used by App 1."
-          replacement = """    self.splitScreenEnabled = YES;
-
-    // Add quick controls: 1 toggles App 1, 2 toggles App 2.
+          needle = "    self.splitScreenEnabled = YES;"
+          replacement = r"""    self.splitScreenEnabled = YES;\n\n    // Add quick controls: 1 toggles App 1, 2 toggles App 2.
     UIButton *app1Toggle = [UIButton buttonWithType:UIButtonTypeSystem];
     app1Toggle.frame = CGRectMake(8, 8, 42, 42);
     [app1Toggle setTitle:@\"1\" forState:UIControlStateNormal];
