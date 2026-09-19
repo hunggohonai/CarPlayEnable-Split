@@ -76,7 +76,8 @@ jobs:
           end = s.index(end_marker, start) + len(end_marker)
           new = (
               "        // First icon creates App 1; next icon becomes App 2.\n"
-              "        id liveCarplayWindow = objcInvoke([UIApplication sharedApplication], @\"liveCarplayWindow\");\n"
+              "        id liveCarplayWindow = objc_getAssociatedObject(self, &kPropertyKey_liveCarplayWindow);\n"
+              "        if (liveCarplayWindow == nil) liveCarplayWindow = objcInvoke([UIApplication sharedApplication], @\"liveCarplayWindow\");\n"
               "        if (liveCarplayWindow != nil)\n"
               "        {\n"
               "            SEL splitSelector = NSSelectorFromString(@\"setupSecondAppWithBundleIdentifier:\");\n"
@@ -117,9 +118,9 @@ jobs:
       - name: Adjust package metadata and target
         run: |
           cd work
-          sed -i '' 's/^Version:.*/Version: 1.0.2-split3/' control
+          sed -i '' 's/^Version:.*/Version: 1.0.2-split4/' control
           sed -i '' 's/^Name:.*/Name: CarPlayEnable Split/' control
-          sed -i '' 's/^Description:.*/Description: Experimental iOS 14 split screen with App 1 and App 2 toggle controls/' control
+          sed -i '' 's/^Description:.*/Description: Experimental iOS 14 split screen persistent App 1 plus App 2/' control
           sed -i '' 's/^ARCHS = .*/ARCHS = arm64/' Makefile
           sed -i '' 's/^TARGET = .*/TARGET = iphone:clang:14.5:14.0/' Makefile
           sed -i '' 's/^ARCHS = .*/ARCHS = arm64/' carplayenableprefs/Makefile
