@@ -65,6 +65,45 @@ jobs:
           p.write_text(s)
           PY
 
+      - name: Enable second CarPlay app selection
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("work/src/hooks/SpringBoard.xm")
+          s = p.read_text()
+          old = '''        // Dismiss any apps that are already being hosted on Carplay
+        id liveCarplayWindow = objcInvoke([UIApplication sharedApplication], @"liveCarplayWindow");
+        if (liveCarplayWindow != nil)
+        {
+            objcInvoke(liveCarplayWindow, @"dismiss");
+        }
+
+        // Launch the requested app
+        liveCarplayWindow = [[CRCarPlayWindow alloc] initWithBundleIdentifier:identifier];
+        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);'''
+          new = '''        // First CarPlayEnable icon creates App 1. While that hosted window is still alive,
+        // the next CarPlayEnable icon becomes App 2 instead of replacing App 1.
+        id liveCarplayWindow = objcInvoke([UIApplication sharedApplication], @"liveCarplayWindow");
+        if (liveCarplayWindow != nil)
+        {
+            SEL splitSelector = NSSelectorFromString(@"setupSecondAppWithBundleIdentifier:");
+            if ([liveCarplayWindow respondsToSelector:splitSelector])
+            {
+                ((void (*)(id, SEL, id))objc_msgSend)(liveCarplayWindow, splitSelector, identifier);
+                return;
+            }
+
+            // Safety fallback for an older window implementation.
+            objcInvoke(liveCarplayWindow, @"dismiss");
+        }
+
+        liveCarplayWindow = [[CRCarPlayWindow alloc] initWithBundleIdentifier:identifier];
+        objc_setAssociatedObject(self, &kPropertyKey_liveCarplayWindow, liveCarplayWindow, OBJC_ASSOCIATION_RETAIN_NONATOMIC);'''
+          if old not in s:
+              raise SystemExit("launchAppOnCarplay block not found")
+          p.write_text(s.replace(old, new, 1))
+          PY
+
       - name: Fix SpringBoard enum typing
         run: |
           python3 - <<'PY'
@@ -85,9 +124,9 @@ jobs:
       - name: Adjust package metadata and target
         run: |
           cd work
-          sed -i '' 's/^Version:.*/Version: 1.0.2-split1/' control
+          sed -i '' 's/^Version:.*/Version: 1.0.2-split2/' control
           sed -i '' 's/^Name:.*/Name: CarPlayEnable Split/' control
-          sed -i '' 's/^Description:.*/Description: Experimental 50-50 split screen build for iOS 14/' control
+          sed -i '' 's/^Description:.*/Description: Experimental 50-50 split screen build for iOS 14 - second icon selects App 2/' control
           sed -i '' 's/^ARCHS = .*/ARCHS = arm64/' Makefile
           sed -i '' 's/^TARGET = .*/TARGET = iphone:clang:14.5:14.0/' Makefile
           sed -i '' 's/^ARCHS = .*/ARCHS = arm64/' carplayenableprefs/Makefile
