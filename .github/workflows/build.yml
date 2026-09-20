@@ -121,9 +121,9 @@ jobs:
       - name: Adjust package metadata and target
         run: |
           cd work
-          sed -i '' 's/^Version:.*/Version: 1.0.2-duodashlite1/' control
-          sed -i '' 's/^Name:.*/Name: CarPlayEnable DuoDash Lite/' control
-          sed -i '' 's/^Description:.*/Description: iOS 14 dual-app CarPlay 50-50 mode with independent left-right controls and replaceable hidden slot/' control
+          sed -i '' 's/^Version:.*/Version: 1.0.2-duodashlite2-mapfix/' control
+          sed -i '' 's/^Name:.*/Name: CarPlayEnable DuoDash Lite MapFix/' control
+          sed -i '' 's/^Description:.*/Description: iOS 14 dual-app CarPlay 50-50 mode with Google Maps hosted-scene foreground fix/' control
           sed -i '' 's/^ARCHS = .*/ARCHS = arm64/' Makefile
           sed -i '' 's/^TARGET = .*/TARGET = iphone:clang:14.5:14.0/' Makefile
           sed -i '' 's/^ARCHS = .*/ARCHS = arm64/' carplayenableprefs/Makefile
@@ -156,6 +156,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="duodash-lite-ios14-v1"
+          TAG="duodash-lite-ios14-v2-mapfix"
           gh release delete "$TAG" --yes --cleanup-tag || true
-          gh release create "$TAG" output/*.deb --title "CarPlayEnable DuoDash Lite iOS 14" --notes "Dual-app 50/50 CarPlay build for iOS 14."
+          gh release create "$TAG" output/*.deb --title "CarPlayEnable DuoDash Lite MapFix iOS 14" --notes "Dual-app 50/50 CarPlay build for iOS 14. MapFix keeps hosted scenes foreground/visible so Google Maps can continue loading and rendering."
