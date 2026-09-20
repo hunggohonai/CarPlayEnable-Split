@@ -2,7 +2,15 @@ from pathlib import Path
 
 p = Path("work/src/CRCarplayWindow.mm")
 s = p.read_text()
-needle = "    self.splitScreenEnabled = YES;"
+needle = "    self.splitScreenEnabled = YES;
+
+    // Re-assert both hosted scenes as active after split creation.
+    [self forceHostedSceneForeground:self.appViewController];
+    [self forceHostedSceneForeground:self.appViewController2];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.8 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self forceHostedSceneForeground:self.appViewController];
+        [self forceHostedSceneForeground:self.appViewController2];
+    });"
 
 controls = r'''
 
@@ -31,9 +39,47 @@ if needle not in s:
 s = s.replace(needle, needle + controls, 1)
 
 methods = r'''
+- (void)forceHostedSceneForeground:(id)viewController
+{
+    if (!viewController) return;
+
+    // Some apps (notably Google Maps on iOS 14) stop network-backed rendering
+    // when SpringBoard still considers their hosted scene backgrounded/occluded.
+    objcInvoke_1(viewController, @"setIgnoresOcclusions:", 1);
+
+    id sceneHandle = objcInvoke(viewController, @"sceneHandle");
+    if (!sceneHandle) return;
+
+    id appScene = objcInvoke(sceneHandle, @"sceneIfExists");
+    if (!appScene) return;
+
+    id sceneSettings = objcInvoke(appScene, @"mutableSettings");
+    if (!sceneSettings) return;
+
+    objcInvoke_1(sceneSettings, @"setBackgrounded:", 0);
+    objcInvoke_1(sceneSettings, @"setForeground:", 1);
+
+    ((void (*)(id, SEL, id, id, void *))objc_msgSend)(
+        appScene,
+        NSSelectorFromString(@"updateSettings:withTransitionContext:completion:"),
+        sceneSettings,
+        nil,
+        0
+    );
+
+    id animationFactory = objcInvoke(objc_getClass("SBApplicationSceneView"), @"defaultDisplayModeAnimationFactory");
+    id appView = objcInvoke(viewController, @"appView");
+    if (appView) {
+        objcInvoke_3(appView, @"setDisplayMode:animationFactory:completion:", 4, animationFactory, 0);
+    }
+}
+
 - (void)layoutVisibleSplitApps
 {
     if (!self.splitScreenEnabled || !self.appViewController2 || !self.appContainerView2) return;
+
+    [self forceHostedSceneForeground:self.appViewController];
+    [self forceHostedSceneForeground:self.appViewController2];
 
     BOOL a = !self.appContainerView.hidden;
     BOOL b = !self.appContainerView2.hidden;
