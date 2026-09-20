@@ -1,5 +1,8 @@
 name: Build CarPlayEnable Split
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -146,3 +149,13 @@ jobs:
           name: CarPlayEnable-Split-iOS14
           path: output/*.deb
           if-no-files-found: error
+
+
+      - name: Publish permanent GitHub release
+        if: github.ref == 'refs/heads/duodash-lite-ios14'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="duodash-lite-ios14-v1"
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" output/*.deb --title "CarPlayEnable DuoDash Lite iOS 14" --notes "Dual-app 50/50 CarPlay build for iOS 14."
